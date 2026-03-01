@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Houses: document ID == user UID, only owner can access
+    match /houses/{houseId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == houseId;
+    }
+
+    // Areas: houseId field must match the authenticated user's UID
+    match /areas/{areaId} {
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.houseId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.houseId == request.auth.uid;
+    }
+
+    // Issues: houseId field must match the authenticated user's UID
+    match /issues/{issueId} {
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.houseId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.houseId == request.auth.uid;
+    }
+
+    // Projects: houseId field must match the authenticated user's UID
+    match /projects/{projectId} {
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.houseId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.houseId == request.auth.uid;
+    }
+  }
+}
