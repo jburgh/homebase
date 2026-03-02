@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { el, esc, typeBadge, priorityBadge, statusToggleClass, statusToggleIcon, getAreaName, iconTrash } from '../utils.js';
+import { el, esc, typeBadge, priorityBadge, statusToggleClass, statusToggleIcon, getAreaName, iconTrash, calcScore, scoreBadge } from '../utils.js';
 import { showModal, hideModal, showConfirm } from '../modal.js';
 import { db, doc, addDoc, updateDoc, deleteDoc, collection, serverTimestamp } from '../firebase.js';
 
@@ -35,6 +35,7 @@ export function issuesView() {
   if (status.length > 0) filtered = filtered.filter(i => status.includes(i.status));
   if (area.length   > 0) filtered = filtered.filter(i => i.areaIds && area.some(a => i.areaIds.includes(a)));
   if (type.length   > 0) filtered = filtered.filter(i => type.includes(i.type));
+  filtered.sort((a, b) => calcScore(b) - calcScore(a));
 
   const hasFilters  = status.length + area.length + type.length > 0;
   const statusLabel = status.length === 0 ? 'Status'
@@ -100,6 +101,7 @@ export function issueCard(issue) {
           ${areaNames ? `<span class="text-muted" style="font-size:0.78rem">${esc(areaNames)}</span>` : ''}
         </div>
       </div>
+      ${scoreBadge(issue)}
       <div class="issue-actions">
         <button class="icon-btn sm danger" onclick="confirmDeleteIssue('${esc(issue.id)}','${esc(issue.name)}')" title="Delete">
           ${iconTrash()}
@@ -155,6 +157,26 @@ window.showIssueModal = function(issue = null, defaultProjectId = null) {
           ).join('')}
         </select>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="issue-effort">Effort <span class="opt">(optional)</span></label>
+          <select id="issue-effort">
+            <option value="">Unknown</option>
+            ${['Novice','Apprentice','Expert','Pro'].map(e =>
+              `<option value="${e}" ${(issue?.effort || '') === e ? 'selected' : ''}>${e}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="issue-cost">Cost <span class="opt">(optional)</span></label>
+          <select id="issue-cost">
+            <option value="">Unknown</option>
+            ${['Free','$','$$','$$$'].map(c =>
+              `<option value="${c}" ${(issue?.costTier || '') === c ? 'selected' : ''}>${c}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
       ${state.areas.length > 0 ? `
         <div class="form-group">
           <label>Areas <span class="opt">(optional)</span></label>
@@ -203,6 +225,8 @@ async function handleIssueSave(id) {
   const type      = el('issue-type').value;
   const status    = el('issue-status').value;
   const priority  = el('issue-priority')?.value || '';
+  const effort    = el('issue-effort')?.value || '';
+  const costTier  = el('issue-cost')?.value || '';
   const desc      = el('issue-desc').value.trim();
   const notes     = el('issue-notes').value.trim();
   const projectEl = el('issue-project');
@@ -228,9 +252,11 @@ async function handleIssueSave(id) {
       houseId:     state.user.uid,
       areaIds,
       projectId:   projectId || null,
-      description: desc  || null,
-      notes:       notes || null,
-      priority:    priority || null,
+      description: desc      || null,
+      notes:       notes     || null,
+      priority:    priority  || null,
+      effort:      effort    || null,
+      costTier:    costTier  || null,
       updatedAt:   serverTimestamp()
     };
     if (id) {

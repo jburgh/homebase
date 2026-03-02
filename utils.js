@@ -70,6 +70,24 @@ export function getProjectIssueCounts(projectId) {
   };
 }
 
+// ── Priority Score ────────────────────────────────────────────
+// Score = priority pts (0-40) + effort pts (0-30) + cost pts (0-30) = 0-100
+export function calcScore(issue) {
+  const priorityPts = { 'Critical': 40, 'High': 30, 'Medium': 20, 'Low': 10 };
+  const effortPts   = { 'Novice': 30, 'Apprentice': 20, 'Expert': 10, 'Pro': 0 };
+  const costPts     = { 'Free': 30, '$': 20, '$$': 10, '$$$': 0 };
+  return (priorityPts[issue.priority] || 0)
+       + (effortPts[issue.effort]     || 0)
+       + (costPts[issue.costTier]     || 0);
+}
+
+export function scoreBadge(issue) {
+  const score = calcScore(issue);
+  if (!score) return '';
+  const cls = score >= 70 ? 'score-high' : score >= 40 ? 'score-mid' : 'score-low';
+  return `<div class="issue-score-chip ${cls}" title="Priority score: ${score}/100">${score}</div>`;
+}
+
 export function iconEdit() {
   return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>

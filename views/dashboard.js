@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { esc, projStatusBadge, getProjectIssueCounts, typeBadge, priorityBadge } from '../utils.js';
+import { esc, projStatusBadge, getProjectIssueCounts, typeBadge, priorityBadge, calcScore, scoreBadge } from '../utils.js';
 
 export function dashboardView() {
   const active      = state.projects.filter(p => p.status === 'In Progress');
@@ -7,7 +7,10 @@ export function dashboardView() {
   const openCount   = state.issues.filter(i => i.status === 'Open').length;
   const progCount   = state.issues.filter(i => i.status === 'In Progress').length;
   const doneCount   = state.issues.filter(i => i.status === 'Done').length;
-  const openTasks   = state.issues.filter(i => i.status === 'Open').slice(0, 5);
+  const openTasks   = [...state.issues]
+    .filter(i => i.status === 'Open')
+    .sort((a, b) => calcScore(b) - calcScore(a))
+    .slice(0, 5);
 
   return `
     <div class="view-content">
@@ -113,6 +116,7 @@ function openTaskRow(issue) {
           ${issue.priority ? priorityBadge(issue.priority) : ''}
         </div>
       </div>
+      ${scoreBadge(issue)}
     </div>`;
 }
 
