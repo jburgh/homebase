@@ -2,6 +2,7 @@ import { state } from '../state.js';
 import { el, esc, typeBadge, priorityBadge, statusToggleClass, statusToggleIcon, getAreaName, iconTrash, calcScore, scoreBadge } from '../utils.js';
 import { showModal, hideModal, showConfirm } from '../modal.js';
 import { db, doc, addDoc, updateDoc, deleteDoc, collection, serverTimestamp } from '../firebase.js';
+import { suppliesSectionHtml, attachSupplyListeners, issueOutstandingCost, formatCurrency } from './supplies.js';
 
 const chevron = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>`;
 
@@ -81,12 +82,13 @@ export function issuesView() {
 }
 
 export function issueCard(issue) {
-  const toggleCls = statusToggleClass(issue.status);
-  const icon      = statusToggleIcon(issue.status);
-  const areaNames = (issue.areaIds || [])
+  const toggleCls   = statusToggleClass(issue.status);
+  const icon        = statusToggleIcon(issue.status);
+  const areaNames   = (issue.areaIds || [])
     .map(id => getAreaName(id))
     .filter(Boolean)
     .join(', ');
+  const outstanding = issueOutstandingCost(issue.id);
 
   return `
     <div class="issue-card">
@@ -99,6 +101,7 @@ export function issueCard(issue) {
           ${typeBadge(issue.type)}
           ${issue.priority ? priorityBadge(issue.priority) : ''}
           ${areaNames ? `<span class="text-muted" style="font-size:0.78rem">${esc(areaNames)}</span>` : ''}
+          ${outstanding > 0 ? `<span class="supply-badge-needed">${formatCurrency(outstanding)} needed</span>` : ''}
         </div>
       </div>
       ${scoreBadge(issue)}
@@ -119,6 +122,12 @@ window.showIssueModal = function(issue = null, defaultProjectId = null) {
       ${esc(a.name)}
     </label>`;
   }).join('');
+
+  const selectedAreaNames = (issue?.areaIds || [])
+    .map(id => state.areas.find(a => a.id === id)?.name).filter(Boolean);
+  const areasLabel = selectedAreaNames.length === 0 ? 'None'
+    : selectedAreaNames.length === 1 ? selectedAreaNames[0]
+    : `${selectedAreaNames.length} selected`;
 
   const projOptions = state.projects.map(p => {
     const sel = (issue?.projectId === p.id || defaultProjectId === p.id) ? 'selected' : '';
@@ -149,7 +158,7 @@ window.showIssueModal = function(issue = null, defaultProjectId = null) {
         </select>
       </div>
       <div class="form-group">
-        <label for="issue-priority">Priority <span class="opt">(optional)</span></label>
+        <label for="issue-priority">Priority</label>
         <select id="issue-priority">
           <option value="">None</option>
           ${['Low','Medium','High','Critical'].map(p =>
@@ -159,7 +168,7 @@ window.showIssueModal = function(issue = null, defaultProjectId = null) {
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label for="issue-effort">Effort <span class="opt">(optional)</span></label>
+          <label for="issue-effort">Effort</label>
           <select id="issue-effort">
             <option value="">Unknown</option>
             ${['Novice','Apprentice','Expert','Pro'].map(e =>
@@ -168,7 +177,7 @@ window.showIssueModal = function(issue = null, defaultProjectId = null) {
           </select>
         </div>
         <div class="form-group">
-          <label for="issue-cost">Cost <span class="opt">(optional)</span></label>
+          <label for="issue-cost">Cost Tier</label>
           <select id="issue-cost">
             <option value="">Unknown</option>
             ${['Free','$','$$','$$$'].map(c =>
@@ -179,13 +188,22 @@ window.showIssueModal = function(issue = null, defaultProjectId = null) {
       </div>
       ${state.areas.length > 0 ? `
         <div class="form-group">
-          <label>Areas <span class="opt">(optional)</span></label>
-          <div class="checkbox-group">${areaChecks}</div>
+          <label>Areas</label>
+          <div class="modal-multiselect" id="modal-areas-ms">
+            <button type="button" class="modal-multiselect-btn"
+                    onclick="toggleModalMultiselect('modal-areas-ms', event)">
+              <span id="modal-areas-label">${areasLabel}</span>
+              ${chevron}
+            </button>
+            <div class="modal-multiselect-panel hidden">
+              <div class="checkbox-group">${areaChecks}</div>
+            </div>
+          </div>
         </div>
       ` : ''}
       ${state.projects.length > 0 ? `
         <div class="form-group">
-          <label for="issue-project">Project <span class="opt">(optional)</span></label>
+          <label for="issue-project">Project</label>
           <select id="issue-project">
             <option value="">None</option>
             ${projOptions}
@@ -193,17 +211,18 @@ window.showIssueModal = function(issue = null, defaultProjectId = null) {
         </div>
       ` : ''}
       <div class="form-group">
-        <label for="issue-desc">Description <span class="opt">(optional)</span></label>
+        <label for="issue-desc">Description</label>
         <textarea id="issue-desc" rows="2" maxlength="500"
                   placeholder="More details…">${esc(issue?.description || '')}</textarea>
       </div>
       <div class="form-group">
-        <label for="issue-notes">Notes <span class="opt">(optional)</span></label>
+        <label for="issue-notes">Notes</label>
         <textarea id="issue-notes" rows="2" maxlength="500"
                   placeholder="Any additional notes…">${esc(issue?.notes || '')}</textarea>
       </div>
       <p id="issue-error" class="error-msg hidden"></p>
-    </form>`;
+    </form>
+    ${isEdit ? suppliesSectionHtml(issue.id) : ''}`;
 
   showModal(
     isEdit ? 'Edit Task' : 'Add Task',
@@ -214,6 +233,27 @@ window.showIssueModal = function(issue = null, defaultProjectId = null) {
 
   el('issue-save-btn').addEventListener('click', () => handleIssueSave(issue?.id || null));
   el('issue-form').addEventListener('submit', e => { e.preventDefault(); handleIssueSave(issue?.id || null); });
+  if (isEdit) attachSupplyListeners();
+
+  // Areas multiselect: update label on change, close on outside click
+  const areasGroup = document.querySelector('#modal-areas-ms .checkbox-group');
+  if (areasGroup) {
+    areasGroup.addEventListener('change', () => {
+      const checked = areasGroup.querySelectorAll('input:checked');
+      const labelEl = document.getElementById('modal-areas-label');
+      if (!labelEl) return;
+      labelEl.textContent = checked.length === 0 ? 'None'
+        : checked.length === 1 ? (checked[0].closest('label')?.textContent.trim() || '1 selected')
+        : `${checked.length} selected`;
+    });
+  }
+  document.addEventListener('click', function closeAreasMs(e) {
+    const ms = document.getElementById('modal-areas-ms');
+    if (!ms) { document.removeEventListener('click', closeAreasMs); return; }
+    if (!ms.contains(e.target)) {
+      ms.querySelector('.modal-multiselect-panel')?.classList.add('hidden');
+    }
+  });
 };
 
 window.showIssueModalById = function(id) {
@@ -278,6 +318,13 @@ window.confirmDeleteIssue = function(id, name) {
   showConfirm('Delete this task permanently?', name, async () => {
     try { await deleteDoc(doc(db, 'issues', id)); } catch (e) { console.error(e); }
   });
+};
+
+window.toggleModalMultiselect = function(id, event) {
+  if (event) event.stopPropagation();
+  const ms = document.getElementById(id);
+  if (!ms) return;
+  ms.querySelector('.modal-multiselect-panel')?.classList.toggle('hidden');
 };
 
 window.cycleIssueStatus = async function(id, current) {

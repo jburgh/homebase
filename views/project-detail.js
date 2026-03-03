@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { esc, projStatusBadge } from '../utils.js';
 import { issueCard } from './tasks.js';
+import { projectSupplyCost, projectOutstandingCost, formatCurrency } from './supplies.js';
 
 export function projectView() {
   const project = state.projects.find(p => p.id === state.currentProjectId);
@@ -10,6 +11,8 @@ export function projectView() {
   const open       = projIssues.filter(i => i.status === 'Open').length;
   const inProg     = projIssues.filter(i => i.status === 'In Progress').length;
   const done       = projIssues.filter(i => i.status === 'Done').length;
+  const totalCost       = projectSupplyCost(project.id);
+  const outstandingCost = projectOutstandingCost(project.id);
 
   return `
     <div class="view-content">
@@ -25,6 +28,18 @@ export function projectView() {
           ${inProg > 0 ? `<span>${inProg} in progress</span>` : ''}
           ${done > 0 ? `<span>${done} done</span>` : ''}
         </div>
+        ${totalCost > 0 ? `
+          <div class="project-cost-row">
+            <span class="project-cost-label">Estimated materials cost</span>
+            <span class="project-cost-value">${formatCurrency(totalCost)}</span>
+          </div>
+          ${outstandingCost > 0 ? `
+          <div class="project-cost-row">
+            <span class="project-cost-label">Still to purchase</span>
+            <span class="project-cost-value outstanding">${formatCurrency(outstandingCost)}</span>
+          </div>
+          ` : ''}
+        ` : ''}
         <div class="project-detail-actions">
           <button class="btn btn-sm btn-secondary" onclick="showProjectModal('${esc(project.id)}')">Edit Project</button>
           <button class="btn btn-sm btn-danger" onclick="confirmDeleteProject('${esc(project.id)}','${esc(project.name)}')">Delete</button>

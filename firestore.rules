@@ -31,5 +31,13 @@ service cloud.firestore {
       allow create: if request.auth != null
                     && request.resource.data.houseId == request.auth.uid;
     }
+
+    // Supplies: houseId field must match the authenticated user's UID
+    match /supplies/{supplyId} {
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.houseId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.houseId == request.auth.uid;
+    }
   }
 }

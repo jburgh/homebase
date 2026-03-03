@@ -72,7 +72,7 @@ window.showProjectModal = function(idOrNull = null) {
         </select>
       </div>
       <div class="form-group">
-        <label for="proj-desc">Description <span class="opt">(optional)</span></label>
+        <label for="proj-desc">Description</label>
         <textarea id="proj-desc" rows="2" maxlength="400"
                   placeholder="What is this project about?">${esc(project?.description || '')}</textarea>
       </div>

@@ -58,7 +58,7 @@ window.showAreaModal = function(area = null) {
                placeholder="e.g. Kitchen, Garage, Backyard" required maxlength="80">
       </div>
       <div class="form-group">
-        <label for="area-desc">Description <span class="opt">(optional)</span></label>
+        <label for="area-desc">Description</label>
         <textarea id="area-desc" rows="2" maxlength="300"
                   placeholder="Any notes about this area">${esc(area?.description || '')}</textarea>
       </div>

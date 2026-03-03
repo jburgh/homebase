@@ -283,6 +283,25 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
+/* ── Modal multi-select dropdown ───────────────────────────── */
+.modal-multiselect { position: relative; }
+.modal-multiselect-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text); font-size: 0.9rem;
+  cursor: pointer; text-align: left;
+  transition: border-color 0.15s;
+}
+.modal-multiselect-btn:hover { border-color: var(--border-focus); }
+.modal-multiselect-btn:focus { outline: none; border-color: var(--border-focus); }
+.modal-multiselect-panel {
+  position: absolute; z-index: 30; top: calc(100% + 3px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-md);
+  padding: 8px 10px; max-height: 180px; overflow-y: auto;
+}
+.modal-multiselect-panel .checkbox-group { gap: 8px; }
+
 /* ── Buttons ───────────────────────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -738,6 +757,176 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
 * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* ── Supplies Section ───────────────────────────────────────── */
+.supplies-section { margin-top: 4px; }
+
+.supplies-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.supplies-title {
+  font-size: 0.85rem; font-weight: 600; color: var(--text-2);
+  display: flex; align-items: center; gap: 8px;
+}
+.supplies-cost-total {
+  font-size: 0.78rem; font-weight: 700; color: var(--primary);
+  background: var(--primary-light);
+  border-radius: 999px; padding: 1px 8px;
+}
+
+/* Supply rows */
+.supply-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 2px; border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.supply-row:last-child { border-bottom: none; }
+
+.supply-thumb { flex-shrink: 0; width: 36px; height: 36px; }
+.supply-img {
+  width: 36px; height: 36px; object-fit: cover;
+  border-radius: var(--radius-sm); border: 1px solid var(--border); display: block;
+}
+.supply-img-placeholder {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  border: 1px dashed var(--border); background: var(--surface-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3);
+}
+
+.supply-info { flex: 1; min-width: 0; overflow: hidden; }
+.supply-name {
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--text); font-weight: 500; text-decoration: none;
+}
+a.supply-name { text-decoration: underline; text-underline-offset: 2px; }
+a.supply-name:hover { color: var(--primary); }
+
+.supply-qty   { flex-shrink: 0; color: var(--text-3); min-width: 24px; text-align: right; }
+.supply-price { flex-shrink: 0; color: var(--text-2); min-width: 54px; text-align: right;
+                font-variant-numeric: tabular-nums; }
+.supply-total { flex-shrink: 0; color: var(--text); font-weight: 600; min-width: 58px;
+                text-align: right; font-variant-numeric: tabular-nums; }
+
+.supply-empty-msg { font-size: 0.82rem; color: var(--text-3); padding: 6px 0; margin: 0; }
+
+/* Supply status pill (Needed / Purchased toggle) */
+.supply-status-pill {
+  flex-shrink: 0;
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em;
+  padding: 2px 7px; border-radius: 999px; border: 1px solid transparent;
+  cursor: pointer; white-space: nowrap; transition: opacity 0.1s;
+}
+.supply-status-pill:hover { opacity: 0.75; }
+.supply-status-pill.needed {
+  background: #fef3c7; color: #92400e; border-color: #fcd34d;
+}
+.supply-status-pill.purchased {
+  background: #d1fae5; color: #065f46; border-color: #6ee7b7;
+}
+[data-theme="dark"] .supply-status-pill.needed {
+  background: #451a03; color: #fcd34d; border-color: #92400e;
+}
+[data-theme="dark"] .supply-status-pill.purchased {
+  background: #022c22; color: #6ee7b7; border-color: #065f46;
+}
+
+/* Purchased row dimmed */
+.supply-row.purchased .supply-name,
+.supply-row.purchased .supply-qty,
+.supply-row.purchased .supply-price,
+.supply-row.purchased .supply-total { opacity: 0.45; }
+
+/* Supplies header cost breakdown */
+.supply-outstanding { color: #b45309; font-weight: 600; font-variant-numeric: tabular-nums; }
+.supply-total-cost  { color: var(--text-3); font-variant-numeric: tabular-nums; }
+.supply-cost-sep    { color: var(--text-3); }
+[data-theme="dark"] .supply-outstanding { color: #fcd34d; }
+
+/* Outstanding supplies badge on issue cards */
+.supply-badge-needed {
+  display: inline-flex; align-items: center;
+  font-size: 0.72rem; font-weight: 600;
+  padding: 1px 6px; border-radius: 999px;
+  background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="dark"] .supply-badge-needed {
+  background: #451a03; color: #fcd34d; border-color: #92400e;
+}
+
+/* Add supply inline form */
+.supply-add-form {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px; margin-top: 8px;
+}
+.supply-url-wrap { position: relative; display: flex; align-items: center; }
+.supply-url-wrap input { flex: 1; padding-right: 80px; }
+.supply-fetch-indicator {
+  position: absolute; right: 10px;
+  font-size: 0.75rem; color: var(--text-3); pointer-events: none;
+}
+/* Image picker grid */
+.supply-img-picker { margin-bottom: 10px; }
+.supply-img-picker-label {
+  font-size: 0.75rem; color: var(--text-3); margin: 0 0 6px;
+}
+.supply-img-picker-grid {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.supply-img-option {
+  width: 60px; height: 60px; padding: 2px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface-2); cursor: pointer; overflow: hidden;
+  transition: border-color 0.15s;
+}
+.supply-img-option img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  border-radius: 3px;
+}
+.supply-img-option:hover   { border-color: var(--primary); }
+.supply-img-option.selected { border-color: var(--primary); background: var(--primary-light); }
+
+/* Upload button */
+.supply-img-upload { margin-bottom: 10px; }
+.supply-upload-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.78rem; color: var(--text-3);
+  cursor: pointer; padding: 4px 8px;
+  border: 1px dashed var(--border); border-radius: var(--radius-sm);
+  transition: color 0.15s, border-color 0.15s;
+}
+.supply-upload-btn:hover { color: var(--primary); border-color: var(--primary); }
+
+.supply-img-preview-wrap {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.supply-img-preview {
+  width: 48px; height: 48px; object-fit: cover;
+  border-radius: var(--radius-sm); border: 1px solid var(--border); display: block;
+}
+.supply-img-clear {
+  font-size: 0.75rem; color: var(--text-3); background: none; border: none;
+  cursor: pointer; padding: 2px 4px;
+}
+.supply-img-clear:hover { color: #dc2626; }
+.supply-form-actions {
+  display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px;
+}
+
+/* Project cost row */
+.project-cost-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-top: 1px solid var(--border); margin-top: 8px;
+}
+.project-cost-label { font-size: 0.82rem; color: var(--text-2); }
+.project-cost-value {
+  font-size: 0.95rem; font-weight: 700; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.project-cost-value.outstanding { color: #b45309; }
+[data-theme="dark"] .project-cost-value.outstanding { color: #fcd34d; }
 
 /* ── Misc ───────────────────────────────────────────────────── */
 .divider { height: 1px; background: var(--border); margin: 12px 0; }

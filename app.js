@@ -16,6 +16,7 @@ import { areasView } from './views/areas.js';
 import { issuesView } from './views/tasks.js';
 import { projectsView } from './views/projects.js';
 import { projectView } from './views/project-detail.js';
+import { refreshSupplyList } from './views/supplies.js';
 
 // ── Theme ─────────────────────────────────────────────────────
 (function() {
@@ -177,6 +178,13 @@ function subscribeToData() {
     state.projects = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderView();
   }));
+
+  const suppliesQ = query(collection(db, 'supplies'), where('houseId', '==', houseId));
+  state.unsubscribers.push(onSnapshot(suppliesQ, snap => {
+    state.supplies = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderView();
+    refreshSupplyList();
+  }));
 }
 
 function unsubscribeAll() {
@@ -307,11 +315,11 @@ window.showSettingsModal = function() {
         <input type="text" id="settings-name" value="${esc(h.name || '')}" required maxlength="100">
       </div>
       <div class="form-group">
-        <label for="settings-address">Address <span class="opt">(optional)</span></label>
+        <label for="settings-address">Address</label>
         <input type="text" id="settings-address" value="${esc(h.address || '')}" maxlength="200">
       </div>
       <div class="form-group">
-        <label for="settings-year">Year Built <span class="opt">(optional)</span></label>
+        <label for="settings-year">Year Built</label>
         <input type="number" id="settings-year" value="${esc(h.yearBuilt || '')}" min="1800" max="2030">
       </div>
       <p id="settings-error" class="error-msg hidden"></p>
@@ -390,6 +398,7 @@ async function initApp() {
       state.areas    = [];
       state.issues   = [];
       state.projects = [];
+      state.supplies = [];
       hideModal();
       showScreen('auth-screen');
       showLoading(false);

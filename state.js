@@ -4,6 +4,7 @@ export const state = {
   areas:            [],
   issues:           [],
   projects:         [],
+  supplies:         [],
   currentView:      'dashboard',
   currentProjectId: null,
   authMode:         'signin',
