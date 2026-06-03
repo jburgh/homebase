@@ -302,11 +302,17 @@ async function handleIssueSave(id) {
       updatedAt:   serverTimestamp()
     };
     if (id) {
+      const oldIssue = state.issues.find(i => i.id === id);
       await updateDoc(doc(db, 'issues', id), data);
+      if (oldIssue?.projectId && oldIssue.projectId !== (projectId || null)) {
+        await syncProjectStatus(oldIssue.projectId, id, null);
+      }
+      await syncProjectStatus(projectId || null, id, status);
     } else {
       data.createdAt = serverTimestamp();
       data.sortOrder = Date.now();
-      await addDoc(collection(db, 'issues'), data);
+      const ref = await addDoc(collection(db, 'issues'), data);
+      await syncProjectStatus(projectId || null, ref.id, status);
     }
     hideModal();
   } catch (err) {
@@ -331,11 +337,36 @@ window.toggleModalMultiselect = function(id, event) {
 };
 
 window.cycleIssueStatus = async function(id, current) {
-  const next = { 'Open': 'In Progress', 'In Progress': 'Done', 'Done': 'Open' };
+  const next      = { 'Open': 'In Progress', 'In Progress': 'Done', 'Done': 'Open' };
+  const newStatus = next[current] || 'Open';
   try {
-    await updateDoc(doc(db, 'issues', id), {
-      status:    next[current] || 'Open',
-      updatedAt: serverTimestamp()
-    });
+    await updateDoc(doc(db, 'issues', id), { status: newStatus, updatedAt: serverTimestamp() });
+    const issue = state.issues.find(i => i.id === id);
+    await syncProjectStatus(issue?.projectId, id, newStatus);
   } catch (e) { console.error(e); }
 };
+
+async function syncProjectStatus(projectId, changedIssueId, newStatus) {
+  if (!projectId) return;
+  const project = state.projects.find(p => p.id === projectId);
+  if (!project) return;
+
+  // Build virtual issues list: existing project issues with the changed one swapped in
+  const others = state.issues.filter(i => i.projectId === projectId && i.id !== changedIssueId);
+  const issues  = newStatus != null ? [...others, { status: newStatus }] : others;
+  if (issues.length === 0) return;
+
+  const allDone   = issues.every(i => i.status === 'Done');
+  const anyActive = issues.some(i => i.status === 'In Progress' || i.status === 'Done');
+
+  let newProjectStatus;
+  if (allDone && (project.status === 'Planning' || project.status === 'In Progress')) {
+    newProjectStatus = 'Complete';
+  } else if (anyActive && project.status === 'Planning') {
+    newProjectStatus = 'In Progress';
+  }
+
+  if (newProjectStatus) {
+    await updateDoc(doc(db, 'projects', projectId), { status: newProjectStatus, updatedAt: serverTimestamp() });
+  }
+}
