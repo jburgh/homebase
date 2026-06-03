@@ -20,13 +20,16 @@ export function dashboardView() {
   const completeProj = state.projects.filter(p => p.status === 'Complete').length;
 
   // Task counts
-  const openCount = state.issues.filter(i => i.status === 'Open').length;
-  const progCount = state.issues.filter(i => i.status === 'In Progress').length;
-  const doneCount = state.issues.filter(i => i.status === 'Done').length;
-  const openTasks = [...state.issues]
+  const openCount   = state.issues.filter(i => i.status === 'Open').length;
+  const progCount   = state.issues.filter(i => i.status === 'In Progress').length;
+  const doneCount   = state.issues.filter(i => i.status === 'Done').length;
+  const taskLimit   = localStorage.getItem('dashboardTaskLimit') || '5';
+  const taskLimitNum = taskLimit === '5' ? 5 : taskLimit === '10' ? 10 : Infinity;
+  const openTasks   = [...state.issues]
     .filter(i => i.status === 'Open')
     .sort((a, b) => calcScore(b) - calcScore(a))
-    .slice(0, 5);
+    .slice(0, taskLimitNum);
+  const hiddenTasks = openCount - openTasks.length;
 
   // Projects limit
   const limit      = localStorage.getItem('dashboardProjectLimit') || 'all';
@@ -127,11 +130,19 @@ export function dashboardView() {
             <p>No open tasks — nice work!</p>
           </div>
         ` : `
-          <p class="dashboard-section-label">Open tasks</p>
+          <div class="dash-section-row">
+            <p class="dashboard-section-label">Open tasks</p>
+            <div class="limit-selector">
+              ${['5','10','all'].map(v => `
+                <button class="limit-btn ${taskLimit === v ? 'active' : ''}"
+                        onclick="setDashboardTaskLimit('${v}')">${v === 'all' ? 'All' : v}</button>
+              `).join('')}
+            </div>
+          </div>
           <div class="issue-list">
             ${openTasks.map(i => openTaskRow(i)).join('')}
           </div>
-          ${openCount > 5 ? `
+          ${hiddenTasks > 0 ? `
             <button class="btn btn-ghost btn-sm btn-block mt-2" onclick="navigateIssuesByStatus('Open')">
               View all ${openCount} open tasks
             </button>

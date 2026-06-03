@@ -209,6 +209,11 @@ window.setDashboardProjectLimit = function(val) {
   renderView();
 };
 
+window.setDashboardTaskLimit = function(val) {
+  localStorage.setItem('dashboardTaskLimit', val);
+  renderView();
+};
+
 window.setDashboardTab = function(tab) {
   state.dashboardTab = tab;
   renderView();
