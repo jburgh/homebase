@@ -1,27 +1,42 @@
 import { state } from '../state.js';
 import { esc, projStatusBadge, getProjectIssueCounts, typeBadge, priorityBadge, calcScore, scoreBadge } from '../utils.js';
 
+const gripIcon = `<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="3" cy="2" r="1.5"/><circle cx="3" cy="8" r="1.5"/><circle cx="3" cy="14" r="1.5"/><circle cx="7" cy="2" r="1.5"/><circle cx="7" cy="8" r="1.5"/><circle cx="7" cy="14" r="1.5"/></svg>`;
+
+function sortByOrder(a, b) {
+  if (a.sortOrder != null && b.sortOrder != null) return a.sortOrder - b.sortOrder;
+  if (a.sortOrder != null) return -1;
+  if (b.sortOrder != null) return 1;
+  return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
+}
+
 export function dashboardView() {
-  const active      = state.projects.filter(p => p.status === 'In Progress');
-  const other       = state.projects.filter(p => p.status !== 'In Progress');
-  const openCount   = state.issues.filter(i => i.status === 'Open').length;
-  const progCount   = state.issues.filter(i => i.status === 'In Progress').length;
-  const doneCount   = state.issues.filter(i => i.status === 'Done').length;
-  const openTasks   = [...state.issues]
+  const limit      = localStorage.getItem('dashboardProjectLimit') || 'all';
+  const open       = [...state.projects]
+    .filter(p => p.status === 'Planning' || p.status === 'In Progress')
+    .sort(sortByOrder);
+  const openCount  = state.issues.filter(i => i.status === 'Open').length;
+  const progCount  = state.issues.filter(i => i.status === 'In Progress').length;
+  const doneCount  = state.issues.filter(i => i.status === 'Done').length;
+  const openTasks  = [...state.issues]
     .filter(i => i.status === 'Open')
     .sort((a, b) => calcScore(b) - calcScore(a))
     .slice(0, 5);
+
+  const limitNum    = limit === '5' ? 5 : limit === '10' ? 10 : Infinity;
+  const visible     = open.slice(0, limitNum);
+  const hiddenCount = open.length - visible.length;
 
   return `
     <div class="view-content">
 
       <!-- ── Projects ───────────────────────────────────────── -->
       <div class="section-header">
-        <h3>Projects <span class="count-pill">${state.projects.length}</span></h3>
+        <h3>Projects <span class="count-pill">${open.length}</span></h3>
         <button class="btn btn-sm btn-primary" onclick="showProjectModal()">+ Add Project</button>
       </div>
 
-      ${state.projects.length === 0 ? `
+      ${open.length === 0 ? `
         <div class="empty-state">
           <div class="empty-icon">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -34,31 +49,22 @@ export function dashboardView() {
           <button class="btn btn-primary" onclick="showProjectModal()">Create Project</button>
         </div>
       ` : `
-        ${active.length > 0 ? `
-          <p class="dashboard-section-label">In Progress</p>
-          <div class="project-grid">
-            ${active.map(p => projectCard(p)).join('')}
-          </div>
-        ` : `
-          <div class="empty-state empty-state-sm">
-            <p>No projects in progress.<br>Mark a project as <strong>In Progress</strong> to see it here.</p>
-          </div>
-        `}
-
-        ${other.length > 0 ? `
-          <p class="dashboard-section-label mt-4">Planning &amp; Complete</p>
-          <div class="list">
-            ${other.map(p => `
-              <div class="list-item clickable" onclick="navigate('project', {projectId:'${esc(p.id)}'})">
-                <div class="list-item-main">
-                  <div class="list-item-title">${esc(p.name)}</div>
-                  ${p.description ? `<div class="list-item-subtitle">${esc(p.description)}</div>` : ''}
-                </div>
-                ${projStatusBadge(p.status)}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
-              </div>
+        <div class="dash-section-row">
+          <p class="dashboard-section-label">Open projects</p>
+          <div class="limit-selector">
+            ${['5','10','all'].map(v => `
+              <button class="limit-btn ${limit === v ? 'active' : ''}"
+                      onclick="setDashboardProjectLimit('${v}')">${v === 'all' ? 'All' : v}</button>
             `).join('')}
           </div>
+        </div>
+        <div class="list" id="dash-open-projects">
+          ${visible.map(p => openProjectRow(p)).join('')}
+        </div>
+        ${hiddenCount > 0 ? `
+          <button class="btn btn-ghost btn-sm btn-block mt-2" onclick="navigate('projects')">
+            View all ${open.length} open projects
+          </button>
         ` : ''}
       `}
 
@@ -103,6 +109,21 @@ export function dashboardView() {
         ` : ''}
       `}
 
+    </div>`;
+}
+
+function openProjectRow(p) {
+  const c = getProjectIssueCounts(p.id);
+  return `
+    <div class="list-item clickable" data-id="${esc(p.id)}" onclick="navigate('project', {projectId:'${esc(p.id)}'})">
+      <span class="drag-handle" title="Drag to reorder">${gripIcon}</span>
+      <div class="list-item-main">
+        <div class="list-item-title">${esc(p.name)}</div>
+        ${p.description ? `<div class="list-item-subtitle">${esc(p.description)}</div>` : ''}
+        ${c.total > 0 ? `<div class="list-item-meta">${c.total} task${c.total !== 1 ? 's' : ''}${c.done > 0 ? ` · ${c.done} done` : ''}${c.inProgress > 0 ? ` · ${c.inProgress} in progress` : ''}</div>` : ''}
+      </div>
+      ${projStatusBadge(p.status)}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
     </div>`;
 }
 

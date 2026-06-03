@@ -116,6 +116,7 @@ async function handleProjectSave(id) {
     } else {
       data.houseId   = state.house.id;
       data.createdAt = serverTimestamp();
+      data.sortOrder = Date.now();
       const ref = await addDoc(collection(db, 'projects'), data);
       hideModal();
       navigate('project', { projectId: ref.id });

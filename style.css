@@ -457,6 +457,20 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
   letter-spacing: 0.06em; color: var(--text-3);
   margin: 0 0 8px;
 }
+.dash-section-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 0 0 8px;
+}
+.dash-section-row .dashboard-section-label { margin-bottom: 0; }
+.limit-selector { display: flex; gap: 2px; }
+.limit-btn {
+  padding: 2px 8px; font-size: 0.72rem; font-weight: 600;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: transparent; color: var(--text-2);
+  cursor: pointer; transition: all 0.15s;
+}
+.limit-btn:hover { color: var(--text); border-color: var(--text-3); }
+.limit-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
 /* Empty state */
 .empty-state {

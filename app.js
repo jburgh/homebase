@@ -189,6 +189,26 @@ function subscribeToData() {
   }));
 }
 
+function initDashboardSort() {
+  const list = document.getElementById('dash-open-projects');
+  if (!list) return;
+  Sortable.create(list, {
+    handle:    '.drag-handle',
+    animation: 150,
+    onEnd: async () => {
+      const ids = [...list.querySelectorAll('[data-id]')].map(el => el.dataset.id);
+      await Promise.all(ids.map((id, i) =>
+        updateDoc(doc(db, 'projects', id), { sortOrder: (i + 1) * 1000 })
+      ));
+    }
+  });
+}
+
+window.setDashboardProjectLimit = function(val) {
+  localStorage.setItem('dashboardProjectLimit', val);
+  renderView();
+};
+
 function initProjectSort() {
   const list = document.getElementById('project-task-list');
   if (!list) return;
@@ -267,7 +287,7 @@ window.clearAllFilters = function() {
 function renderView() {
   const content = el('main-content');
   switch (state.currentView) {
-    case 'dashboard': content.innerHTML = dashboardView(); break;
+    case 'dashboard': content.innerHTML = dashboardView(); initDashboardSort(); break;
     case 'areas':     content.innerHTML = areasView();     break;
     case 'issues':    content.innerHTML = issuesView();    break;
     case 'projects':  content.innerHTML = projectsView();  break;
