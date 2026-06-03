@@ -365,13 +365,17 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
 }
 #app-brand {
   font-family: 'Nabla', sans-serif;
-  font-size: 1.05rem; font-weight: 400;
+  font-size: 1.4rem; font-weight: 400;
   letter-spacing: normal;
   color: var(--primary);
   flex-shrink: 0;
   padding-right: 12px;
   border-right: 1px solid var(--border);
   margin-right: 4px;
+}
+.nabla-brand {
+  font-family: 'Nabla', sans-serif;
+  font-weight: 400;
 }
 #page-title {
   flex: 1; font-size: 1.05rem; font-weight: 600;
@@ -440,6 +444,8 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
   #sidebar { display: flex; }
   #app-header { left: var(--sidebar-w); }
   #main-content { margin-left: var(--sidebar-w); margin-bottom: 0; }
+  #app-brand { display: none; }
+  .sidebar-logo .nabla-brand { font-size: 1.4rem; }
   #bottom-nav { display: none; }
 }
 
