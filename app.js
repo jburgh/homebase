@@ -2,6 +2,7 @@
 // app.js — HomeBase SPA (orchestrator)
 // ============================================================
 
+import Sortable from 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/modular/sortable.esm.js';
 import {
   auth, db,
   doc, setDoc, getDoc, getDocs, updateDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp,
@@ -188,6 +189,21 @@ function subscribeToData() {
   }));
 }
 
+function initProjectSort() {
+  const list = document.getElementById('project-task-list');
+  if (!list) return;
+  Sortable.create(list, {
+    handle:    '.drag-handle',
+    animation: 150,
+    onEnd: async () => {
+      const ids = [...list.querySelectorAll('[data-id]')].map(el => el.dataset.id);
+      await Promise.all(ids.map((id, i) =>
+        updateDoc(doc(db, 'issues', id), { sortOrder: (i + 1) * 1000 })
+      ));
+    }
+  });
+}
+
 function unsubscribeAll() {
   state.unsubscribers.forEach(fn => fn());
   state.unsubscribers = [];
@@ -255,7 +271,7 @@ function renderView() {
     case 'areas':     content.innerHTML = areasView();     break;
     case 'issues':    content.innerHTML = issuesView();    break;
     case 'projects':  content.innerHTML = projectsView();  break;
-    case 'project':   content.innerHTML = projectView();   break;
+    case 'project':   content.innerHTML = projectView(); initProjectSort(); break;
     default:          content.innerHTML = dashboardView();
   }
   attachFilterListeners();

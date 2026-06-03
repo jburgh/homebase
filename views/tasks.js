@@ -4,7 +4,8 @@ import { showModal, hideModal, showConfirm } from '../modal.js';
 import { db, doc, addDoc, updateDoc, deleteDoc, collection, serverTimestamp } from '../firebase.js';
 import { suppliesSectionHtml, attachSupplyListeners, issueOutstandingCost, formatCurrency } from './supplies.js';
 
-const chevron = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>`;
+const chevron  = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>`;
+const gripIcon  = `<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="3" cy="2" r="1.5"/><circle cx="3" cy="8" r="1.5"/><circle cx="3" cy="14" r="1.5"/><circle cx="7" cy="2" r="1.5"/><circle cx="7" cy="8" r="1.5"/><circle cx="7" cy="14" r="1.5"/></svg>`;
 
 function filterDropdown(key, label, selected, options) {
   const active = selected.length > 0;
@@ -81,7 +82,7 @@ export function issuesView() {
     </div>`;
 }
 
-export function issueCard(issue) {
+export function issueCard(issue, { draggable = false } = {}) {
   const toggleCls   = statusToggleClass(issue.status);
   const icon        = statusToggleIcon(issue.status);
   const areaNames   = (issue.areaIds || [])
@@ -91,7 +92,8 @@ export function issueCard(issue) {
   const outstanding = issueOutstandingCost(issue.id);
 
   return `
-    <div class="issue-card">
+    <div class="issue-card" data-id="${esc(issue.id)}">
+      ${draggable ? `<span class="drag-handle" title="Drag to reorder">${gripIcon}</span>` : ''}
       <button class="status-toggle ${toggleCls}"
               onclick="cycleIssueStatus('${esc(issue.id)}','${esc(issue.status)}')"
               title="Toggle status">${icon}</button>
@@ -303,6 +305,7 @@ async function handleIssueSave(id) {
       await updateDoc(doc(db, 'issues', id), data);
     } else {
       data.createdAt = serverTimestamp();
+      data.sortOrder = Date.now();
       await addDoc(collection(db, 'issues'), data);
     }
     hideModal();

@@ -7,7 +7,14 @@ export function projectView() {
   const project = state.projects.find(p => p.id === state.currentProjectId);
   if (!project) return `<div class="view-content"><p class="text-muted">Project not found.</p></div>`;
 
-  const projIssues = state.issues.filter(i => i.projectId === project.id);
+  const projIssues = state.issues
+    .filter(i => i.projectId === project.id)
+    .sort((a, b) => {
+      if (a.sortOrder != null && b.sortOrder != null) return a.sortOrder - b.sortOrder;
+      if (a.sortOrder != null) return -1;
+      if (b.sortOrder != null) return 1;
+      return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
+    });
   const open       = projIssues.filter(i => i.status === 'Open').length;
   const inProg     = projIssues.filter(i => i.status === 'In Progress').length;
   const done       = projIssues.filter(i => i.status === 'Done').length;
@@ -58,8 +65,8 @@ export function projectView() {
           <button class="btn btn-primary" onclick="showIssueModal(null,'${esc(project.id)}')">Add a Task</button>
         </div>
       ` : `
-        <div class="issue-list">
-          ${projIssues.map(i => issueCard(i)).join('')}
+        <div class="issue-list" id="project-task-list">
+          ${projIssues.map(i => issueCard(i, { draggable: true })).join('')}
         </div>
       `}
     </div>`;
