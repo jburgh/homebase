@@ -1,5 +1,7 @@
 # HomeBase 🏠
 
+**Live app:** https://jburgh.github.io/homebase/
+
 HomeBase is a sleek, self-contained, mobile-first **Single Page Application (SPA)** designed as a personal home improvement and property maintenance tracker. It allows homeowners to organize living spaces by breaking tasks down by physical rooms (Areas), linking them to larger initiatives (Projects), and managing itemized shopping lists (Supplies & Materials) with real-time financial tracking.
 
 ---
