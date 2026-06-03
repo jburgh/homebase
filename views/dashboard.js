@@ -11,102 +11,133 @@ function sortByOrder(a, b) {
 }
 
 export function dashboardView() {
-  const limit      = localStorage.getItem('dashboardProjectLimit') || 'all';
-  const open       = [...state.projects]
-    .filter(p => p.status === 'Planning' || p.status === 'In Progress')
-    .sort(sortByOrder);
-  const openCount  = state.issues.filter(i => i.status === 'Open').length;
-  const progCount  = state.issues.filter(i => i.status === 'In Progress').length;
-  const doneCount  = state.issues.filter(i => i.status === 'Done').length;
-  const openTasks  = [...state.issues]
+  const tab = state.dashboardTab || 'projects';
+
+  // Project counts
+  const open        = [...state.projects].filter(p => p.status === 'Planning' || p.status === 'In Progress').sort(sortByOrder);
+  const inProgProj  = state.projects.filter(p => p.status === 'In Progress').length;
+  const planProj    = state.projects.filter(p => p.status === 'Planning').length;
+  const completeProj = state.projects.filter(p => p.status === 'Complete').length;
+
+  // Task counts
+  const openCount = state.issues.filter(i => i.status === 'Open').length;
+  const progCount = state.issues.filter(i => i.status === 'In Progress').length;
+  const doneCount = state.issues.filter(i => i.status === 'Done').length;
+  const openTasks = [...state.issues]
     .filter(i => i.status === 'Open')
     .sort((a, b) => calcScore(b) - calcScore(a))
     .slice(0, 5);
 
-  const limitNum    = limit === '5' ? 5 : limit === '10' ? 10 : Infinity;
-  const visible     = open.slice(0, limitNum);
+  // Projects limit
+  const limit      = localStorage.getItem('dashboardProjectLimit') || 'all';
+  const limitNum   = limit === '5' ? 5 : limit === '10' ? 10 : Infinity;
+  const visible    = open.slice(0, limitNum);
   const hiddenCount = open.length - visible.length;
 
   return `
     <div class="view-content">
 
-      <!-- ── Projects ───────────────────────────────────────── -->
-      <div class="section-header">
-        <h3>Projects <span class="count-pill">${open.length}</span></h3>
-        <button class="btn btn-sm btn-primary" onclick="showProjectModal()">+ Add Project</button>
+      <div class="tab-bar dash-tab-bar">
+        <button class="tab ${tab === 'projects' ? 'active' : ''}" onclick="setDashboardTab('projects')">Projects</button>
+        <button class="tab ${tab === 'tasks' ? 'active' : ''}" onclick="setDashboardTab('tasks')">Tasks</button>
       </div>
 
-      ${open.length === 0 ? `
-        <div class="empty-state">
-          <div class="empty-icon">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M2 18a1 1 0 001 1h18a1 1 0 001-1v-2a1 1 0 00-1-1H3a1 1 0 00-1 1v2z"/>
-              <path d="M10 10V5a2 2 0 014 0v5"/>
-              <path d="M4 15v-3a8 8 0 0116 0v3"/>
-            </svg>
-          </div>
-          <p>No projects yet.<br>Create one to get started.</p>
-          <button class="btn btn-primary" onclick="showProjectModal()">Create Project</button>
+      ${tab === 'projects' ? `
+
+        <div class="section-header mt-4">
+          <h3>Projects <span class="count-pill">${open.length}</span></h3>
+          <button class="btn btn-sm btn-primary" onclick="showProjectModal()">+ Add Project</button>
         </div>
-      ` : `
-        <div class="dash-section-row">
-          <p class="dashboard-section-label">Open projects</p>
-          <div class="limit-selector">
-            ${['5','10','all'].map(v => `
-              <button class="limit-btn ${limit === v ? 'active' : ''}"
-                      onclick="setDashboardProjectLimit('${v}')">${v === 'all' ? 'All' : v}</button>
-            `).join('')}
+
+        <div class="stats-bar">
+          <div class="stat-item clickable" onclick="navigate('projects')">
+            <span class="stat-value">${inProgProj}</span>
+            <span class="stat-label">In Progress</span>
+          </div>
+          <div class="stat-item clickable" onclick="navigate('projects')">
+            <span class="stat-value">${planProj}</span>
+            <span class="stat-label">Planning</span>
+          </div>
+          <div class="stat-item clickable" onclick="navigate('projects')">
+            <span class="stat-value">${completeProj}</span>
+            <span class="stat-label">Complete</span>
           </div>
         </div>
-        <div class="list" id="dash-open-projects">
-          ${visible.map(p => openProjectRow(p)).join('')}
-        </div>
-        ${hiddenCount > 0 ? `
-          <button class="btn btn-ghost btn-sm btn-block mt-2" onclick="navigate('projects')">
-            View all ${open.length} open projects
-          </button>
-        ` : ''}
-      `}
 
-      <!-- ── Tasks ──────────────────────────────────────────── -->
-      <div class="section-header mt-4">
-        <h3>Tasks <span class="count-pill">${state.issues.length}</span></h3>
-        <button class="btn btn-sm btn-primary" onclick="showIssueModal()">+ Add Task</button>
-      </div>
+        ${open.length === 0 ? `
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2 18a1 1 0 001 1h18a1 1 0 001-1v-2a1 1 0 00-1-1H3a1 1 0 00-1 1v2z"/>
+                <path d="M10 10V5a2 2 0 014 0v5"/>
+                <path d="M4 15v-3a8 8 0 0116 0v3"/>
+              </svg>
+            </div>
+            <p>No open projects.<br>Create one to get started.</p>
+            <button class="btn btn-primary" onclick="showProjectModal()">Create Project</button>
+          </div>
+        ` : `
+          <div class="dash-section-row">
+            <p class="dashboard-section-label">Open projects</p>
+            <div class="limit-selector">
+              ${['5','10','all'].map(v => `
+                <button class="limit-btn ${limit === v ? 'active' : ''}"
+                        onclick="setDashboardProjectLimit('${v}')">${v === 'all' ? 'All' : v}</button>
+              `).join('')}
+            </div>
+          </div>
+          <div class="list" id="dash-open-projects">
+            ${visible.map(p => openProjectRow(p)).join('')}
+          </div>
+          ${hiddenCount > 0 ? `
+            <button class="btn btn-ghost btn-sm btn-block mt-2" onclick="navigate('projects')">
+              View all ${open.length} open projects
+            </button>
+          ` : ''}
+        `}
 
-      <div class="stats-bar">
-        <div class="stat-item clickable" onclick="navigateIssuesByStatus('Open')">
-          <span class="stat-value">${openCount}</span>
-          <span class="stat-label">Open tasks</span>
-        </div>
-        <div class="stat-item clickable" onclick="navigateIssuesByStatus('In Progress')">
-          <span class="stat-value">${progCount}</span>
-          <span class="stat-label">In Progress tasks</span>
-        </div>
-        <div class="stat-item clickable" onclick="navigateIssuesByStatus('Done')">
-          <span class="stat-value">${doneCount}</span>
-          <span class="stat-label">Completed tasks</span>
-        </div>
-      </div>
-
-      ${state.issues.length === 0 ? `
-        <div class="empty-state empty-state-sm">
-          <p>No tasks yet. Add one to get started.</p>
-        </div>
-      ` : openTasks.length === 0 ? `
-        <div class="empty-state empty-state-sm">
-          <p>No open tasks — nice work!</p>
-        </div>
       ` : `
-        <p class="dashboard-section-label">Open tasks</p>
-        <div class="issue-list">
-          ${openTasks.map(i => openTaskRow(i)).join('')}
+
+        <div class="section-header mt-4">
+          <h3>Tasks <span class="count-pill">${state.issues.length}</span></h3>
+          <button class="btn btn-sm btn-primary" onclick="showIssueModal()">+ Add Task</button>
         </div>
-        ${openCount > 5 ? `
-          <button class="btn btn-ghost btn-sm btn-block mt-2" onclick="navigateIssuesByStatus('Open')">
-            View all ${openCount} open tasks
-          </button>
-        ` : ''}
+
+        <div class="stats-bar">
+          <div class="stat-item clickable" onclick="navigateIssuesByStatus('Open')">
+            <span class="stat-value">${openCount}</span>
+            <span class="stat-label">Open</span>
+          </div>
+          <div class="stat-item clickable" onclick="navigateIssuesByStatus('In Progress')">
+            <span class="stat-value">${progCount}</span>
+            <span class="stat-label">In Progress</span>
+          </div>
+          <div class="stat-item clickable" onclick="navigateIssuesByStatus('Done')">
+            <span class="stat-value">${doneCount}</span>
+            <span class="stat-label">Done</span>
+          </div>
+        </div>
+
+        ${state.issues.length === 0 ? `
+          <div class="empty-state empty-state-sm">
+            <p>No tasks yet. Add one to get started.</p>
+          </div>
+        ` : openTasks.length === 0 ? `
+          <div class="empty-state empty-state-sm">
+            <p>No open tasks — nice work!</p>
+          </div>
+        ` : `
+          <p class="dashboard-section-label">Open tasks</p>
+          <div class="issue-list">
+            ${openTasks.map(i => openTaskRow(i)).join('')}
+          </div>
+          ${openCount > 5 ? `
+            <button class="btn btn-ghost btn-sm btn-block mt-2" onclick="navigateIssuesByStatus('Open')">
+              View all ${openCount} open tasks
+            </button>
+          ` : ''}
+        `}
+
       `}
 
     </div>`;

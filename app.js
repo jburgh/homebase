@@ -209,6 +209,11 @@ window.setDashboardProjectLimit = function(val) {
   renderView();
 };
 
+window.setDashboardTab = function(tab) {
+  state.dashboardTab = tab;
+  renderView();
+};
+
 function initProjectSort() {
   const list = document.getElementById('project-task-list');
   if (!list) return;
