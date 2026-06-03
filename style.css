@@ -413,7 +413,12 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
 }
 .sidebar-nav .nav-btn:hover { background: var(--bg); color: var(--text); }
 .sidebar-nav .nav-btn.active { background: var(--primary-light); color: var(--primary); }
-.sidebar-footer { padding: 12px 8px; border-top: 1px solid var(--border); }
+.sidebar-footer {
+  padding: 12px 8px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sidebar-github { color: var(--text-3); display: flex; align-items: center; padding: 4px; transition: color 0.15s; }
+.sidebar-github:hover { color: var(--text); }
 
 /* Main content area */
 #main-content {
