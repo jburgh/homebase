@@ -39,6 +39,14 @@ function showScreen(id) {
 }
 
 // ── Auth ─────────────────────────────────────────────────────
+window.togglePasswordReveal = function() {
+  const input = document.getElementById('auth-password');
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  document.querySelector('.eye-show').style.display = isHidden ? 'none' : '';
+  document.querySelector('.eye-hide').style.display = isHidden ? '' : 'none';
+};
+
 window.switchAuthTab = function(mode) {
   state.authMode = mode;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));

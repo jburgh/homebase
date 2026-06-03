@@ -175,7 +175,7 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
   margin-bottom: 14px;
 }
 .auth-logo svg { stroke: white; }
-.auth-header h1 { font-size: 1.75rem; color: var(--text); }
+.auth-header h1 { font-family: 'Bungee Spice', sans-serif; font-weight: 400; font-size: 1.75rem; color: var(--primary); }
 .auth-header p { color: var(--text-2); margin-top: 4px; }
 
 .auth-card {
@@ -201,6 +201,14 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
 .tab:hover:not(.active) { color: var(--text); }
 
 #auth-form { padding: 20px; }
+.input-reveal { position: relative; }
+.input-reveal input { padding-right: 40px; }
+.reveal-btn {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text-3); padding: 2px;
+  transition: color 0.15s;
+}
+.reveal-btn:hover { color: var(--text-2); }
 
 /* ── Forms ─────────────────────────────────────────────────── */
 .form-group { margin-bottom: 14px; }
@@ -363,19 +371,17 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
   padding: 0 12px;
   box-shadow: var(--shadow-sm);
 }
-#app-brand {
-  font-family: 'Nabla', sans-serif;
-  font-size: 1.4rem; font-weight: 400;
-  letter-spacing: normal;
+.app-brand {
+  font-family: 'Bungee Spice', sans-serif;
+  font-weight: 400;
+  font-size: clamp(1.0rem, 2.5vw, 1.7rem);
   color: var(--primary);
+}
+#app-brand {
   flex-shrink: 0;
   padding-right: 12px;
   border-right: 1px solid var(--border);
   margin-right: 4px;
-}
-.nabla-brand {
-  font-family: 'Nabla', sans-serif;
-  font-weight: 400;
 }
 #page-title {
   flex: 1; font-size: 1.05rem; font-weight: 600;
@@ -395,7 +401,6 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
 .sidebar-logo {
   display: flex; align-items: center; gap: 10px;
   padding: 18px 16px; border-bottom: 1px solid var(--border);
-  font-weight: 700; font-size: 1.05rem; color: var(--primary);
 }
 .sidebar-logo svg { stroke: var(--primary); }
 .sidebar-nav { flex: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
@@ -445,7 +450,6 @@ h1,h2,h3,h4 { font-weight: 600; line-height: 1.25; }
   #app-header { left: var(--sidebar-w); }
   #main-content { margin-left: var(--sidebar-w); margin-bottom: 0; }
   #app-brand { display: none; }
-  .sidebar-logo .nabla-brand { font-size: 1.4rem; }
   #bottom-nav { display: none; }
 }
 
