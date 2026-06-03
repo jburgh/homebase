@@ -897,6 +897,25 @@ a.supply-name:hover { color: var(--primary); }
 [data-theme="dark"] .supply-outstanding { color: #fcd34d; }
 
 /* Outstanding supplies badge on issue cards */
+.project-badge-row { display: flex; align-items: center; gap: 6px; margin: 3px 0 1px; }
+.project-badge-label { font-size: 0.72rem; color: var(--text-3); font-weight: 500; flex-shrink: 0; }
+.project-badge {
+  display: inline-flex; align-items: center;
+  font-size: 0.72rem; font-weight: 500;
+  padding: 2px 8px; border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer; transition: opacity 0.15s;
+  max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: hsl(var(--pb-hue), 50%, 96%);
+  color: hsl(var(--pb-hue), 55%, 28%);
+  border-color: hsl(var(--pb-hue), 45%, 72%);
+}
+[data-theme="dark"] .project-badge {
+  background: hsl(var(--pb-hue), 25%, 16%);
+  color: hsl(var(--pb-hue), 55%, 62%);
+  border-color: hsl(var(--pb-hue), 30%, 28%);
+}
+.project-badge:hover { opacity: 0.75; }
 .supply-badge-needed {
   display: inline-flex; align-items: center;
   font-size: 0.72rem; font-weight: 600;

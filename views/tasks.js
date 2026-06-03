@@ -76,13 +76,19 @@ export function issuesView() {
         </div>
       ` : `
         <div class="issue-list">
-          ${filtered.map(i => issueCard(i)).join('')}
+          ${filtered.map(i => issueCard(i, { showProject: true })).join('')}
         </div>
       `}
     </div>`;
 }
 
-export function issueCard(issue, { draggable = false } = {}) {
+function projectBadgeStyle(id) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return `--pb-hue:${hash % 360}`;
+}
+
+export function issueCard(issue, { draggable = false, showProject = false } = {}) {
   const toggleCls   = statusToggleClass(issue.status);
   const icon        = statusToggleIcon(issue.status);
   const areaNames   = (issue.areaIds || [])
@@ -90,6 +96,10 @@ export function issueCard(issue, { draggable = false } = {}) {
     .filter(Boolean)
     .join(', ');
   const outstanding = issueOutstandingCost(issue.id);
+  const project     = showProject && issue.projectId
+    ? state.projects.find(p => p.id === issue.projectId)
+    : null;
+  const projectBadgeInlineStyle = project ? projectBadgeStyle(project.id) : '';
 
   return `
     <div class="issue-card" data-id="${esc(issue.id)}">
@@ -99,6 +109,7 @@ export function issueCard(issue, { draggable = false } = {}) {
               title="Toggle status">${icon}</button>
       <div class="issue-body" onclick="showIssueModalById('${esc(issue.id)}')">
         <div class="issue-name">${esc(issue.name)}</div>
+        ${project ? `<div class="project-badge-row"><span class="project-badge-label">Project:</span><button class="project-badge" style="${projectBadgeInlineStyle}" onclick="event.stopPropagation(); navigate('project', {projectId:'${esc(project.id)}'})" title="Open project">${esc(project.name)}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:4px;flex-shrink:0"><polyline points="9,18 15,12 9,6"/></svg></button></div>` : ''}
         <div class="issue-meta">
           ${typeBadge(issue.type)}
           ${issue.priority ? priorityBadge(issue.priority) : ''}
