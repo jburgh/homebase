@@ -3,6 +3,24 @@
 // ============================================================
 
 import Sortable from 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/modular/sortable.esm.js';
+
+document.fonts.load('400 48px "Bungee Spice"').then(() => {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  ctx.font = `400 58px "Bungee Spice", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('H', size / 2, size / 2 + 2);
+
+  let link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+  link.rel = 'icon';
+  link.type = 'image/png';
+  link.href = canvas.toDataURL('image/png');
+  document.head.appendChild(link);
+});
 import {
   auth, db,
   doc, setDoc, getDoc, getDocs, updateDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp,
