@@ -100,7 +100,7 @@ async function handleAreaSave(id) {
       await updateDoc(doc(db, 'areas', id), { name, description: desc });
     } else {
       await addDoc(collection(db, 'areas'), {
-        name, houseId: state.user.uid,
+        name, houseId: state.house.id,
         ...(desc && { description: desc }),
         createdAt: serverTimestamp()
       });

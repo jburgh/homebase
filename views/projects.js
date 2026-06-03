@@ -114,7 +114,7 @@ async function handleProjectSave(id) {
         el('page-title').textContent = name;
       }
     } else {
-      data.houseId   = state.user.uid;
+      data.houseId   = state.house.id;
       data.createdAt = serverTimestamp();
       const ref = await addDoc(collection(db, 'projects'), data);
       hideModal();

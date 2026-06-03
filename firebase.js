@@ -19,6 +19,6 @@ export {
 
 export {
   collection, doc,
-  addDoc, setDoc, getDoc, updateDoc, deleteDoc,
+  addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc,
   query, where, orderBy, onSnapshot, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';

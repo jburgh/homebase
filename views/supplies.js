@@ -444,7 +444,7 @@ window.saveSupply = async function(issueId) {
     } else {
       await addDoc(collection(db, 'supplies'), {
         ...data,
-        houseId:   state.user.uid,
+        houseId:   state.house.id,
         issueId,
         purchased: false,
         createdAt: serverTimestamp()

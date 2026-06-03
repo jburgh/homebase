@@ -2,42 +2,44 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Houses: document ID == user UID, only owner can access
+    // Houses: ownerId field must match the authenticated user's UID
     match /houses/{houseId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == houseId;
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.ownerId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.ownerId == request.auth.uid;
     }
 
-    // Areas: houseId field must match the authenticated user's UID
+    // Areas: owned by whoever owns the referenced house document
     match /areas/{areaId} {
       allow read, update, delete: if request.auth != null
-                                  && resource.data.houseId == request.auth.uid;
+                                  && get(/databases/$(database)/documents/houses/$(resource.data.houseId)).data.ownerId == request.auth.uid;
       allow create: if request.auth != null
-                    && request.resource.data.houseId == request.auth.uid;
+                    && get(/databases/$(database)/documents/houses/$(request.resource.data.houseId)).data.ownerId == request.auth.uid;
     }
 
-    // Issues: houseId field must match the authenticated user's UID
+    // Issues: owned by whoever owns the referenced house document
     match /issues/{issueId} {
       allow read, update, delete: if request.auth != null
-                                  && resource.data.houseId == request.auth.uid;
+                                  && get(/databases/$(database)/documents/houses/$(resource.data.houseId)).data.ownerId == request.auth.uid;
       allow create: if request.auth != null
-                    && request.resource.data.houseId == request.auth.uid;
+                    && get(/databases/$(database)/documents/houses/$(request.resource.data.houseId)).data.ownerId == request.auth.uid;
     }
 
-    // Projects: houseId field must match the authenticated user's UID
+    // Projects: owned by whoever owns the referenced house document
     match /projects/{projectId} {
       allow read, update, delete: if request.auth != null
-                                  && resource.data.houseId == request.auth.uid;
+                                  && get(/databases/$(database)/documents/houses/$(resource.data.houseId)).data.ownerId == request.auth.uid;
       allow create: if request.auth != null
-                    && request.resource.data.houseId == request.auth.uid;
+                    && get(/databases/$(database)/documents/houses/$(request.resource.data.houseId)).data.ownerId == request.auth.uid;
     }
 
-    // Supplies: houseId field must match the authenticated user's UID
+    // Supplies: owned by whoever owns the referenced house document
     match /supplies/{supplyId} {
       allow read, update, delete: if request.auth != null
-                                  && resource.data.houseId == request.auth.uid;
+                                  && get(/databases/$(database)/documents/houses/$(resource.data.houseId)).data.ownerId == request.auth.uid;
       allow create: if request.auth != null
-                    && request.resource.data.houseId == request.auth.uid;
+                    && get(/databases/$(database)/documents/houses/$(request.resource.data.houseId)).data.ownerId == request.auth.uid;
     }
   }
 }

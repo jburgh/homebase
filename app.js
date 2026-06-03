@@ -4,7 +4,7 @@
 
 import {
   auth, db,
-  doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp,
+  doc, setDoc, getDoc, getDocs, updateDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp,
   createUserWithEmailAndPassword, signInWithEmailAndPassword, fbSignOut,
   onAuthStateChanged, browserLocalPersistence, setPersistence
 } from './firebase.js';
@@ -91,9 +91,11 @@ window.handleSignOut = async function() {
 
 // ── House ─────────────────────────────────────────────────────
 async function loadHouse(uid) {
-  const snap = await getDoc(doc(db, 'houses', uid));
-  if (snap.exists()) {
-    state.house = { id: snap.id, ...snap.data() };
+  const q    = query(collection(db, 'houses'), where('ownerId', '==', uid));
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const d = snap.docs[0];
+    state.house = { id: d.id, ...d.data() };
     return true;
   }
   return false;
@@ -113,13 +115,12 @@ async function createHouse(name, address, yearBuilt) {
 }
 
 async function updateHouse(name, address, yearBuilt) {
-  const uid  = state.user.uid;
   const data = {
     name,
     ...(address   !== undefined && { address }),
     ...(yearBuilt !== undefined && { yearBuilt: yearBuilt ? parseInt(yearBuilt, 10) : null })
   };
-  await updateDoc(doc(db, 'houses', uid), data);
+  await updateDoc(doc(db, 'houses', state.house.id), data);
   state.house = { ...state.house, ...data };
   el('page-title').textContent = name || 'Dashboard';
 }
@@ -159,7 +160,7 @@ el('house-setup-form').addEventListener('submit', async e => {
 // ── Data Subscriptions ────────────────────────────────────────
 function subscribeToData() {
   unsubscribeAll();
-  const houseId = state.user.uid;
+  const houseId = state.house.id;
 
   const areasQ = query(collection(db, 'areas'), where('houseId', '==', houseId), orderBy('createdAt', 'asc'));
   state.unsubscribers.push(onSnapshot(areasQ, snap => {

@@ -289,7 +289,7 @@ async function handleIssueSave(id) {
   try {
     const data = {
       name, type, status,
-      houseId:     state.user.uid,
+      houseId:     state.house.id,
       areaIds,
       projectId:   projectId || null,
       description: desc      || null,
